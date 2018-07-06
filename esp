@@ -302,18 +302,11 @@ function urldecode() {
 function esp_script_dl(){
 	local SCRIPT="$1"
 	local URL="$2"
-	shift 2
-	if [ -e "${DL_SCRIPTS}"/"${SCRIPT}" ]
-	then
-		"${DL_SCRIPTS}"/"${SCRIPT}" "$@"
-	else
-		echo -ne "${YELLOW}Script not yet downloaded, downloading...${END}"
-		mkdir -p "${DL_SCRIPTS}"
-		wget --quiet -P "${DL_SCRIPTS}" "${URL}"
-		chmod u+x "${DL_SCRIPTS}"/"${SCRIPT}"
-		echo " ${YELLOW}Complete${END}"
-		"${DL_SCRIPTS}"/"${SCRIPT}" "$@"
-	fi
+	echo -ne "${YELLOW}Script not yet downloaded, downloading...${END}"
+	mkdir -p "${DL_SCRIPTS}"
+	wget --quiet -P "${DL_SCRIPTS}" "${URL}"
+	chmod u+x "${DL_SCRIPTS}"/"${SCRIPT}"
+	echo " ${YELLOW}Complete${END}"
 }
 
 #
@@ -817,7 +810,13 @@ function esp_help_net() {
 # Account Information
 # ------------------
 
-alias acctinfo="esp_script_dl \"acctinfo\" \"https://raw.githubusercontent.com/cPanelInc/tech-acctinfo/master/acctinfo\" \"--nocode\""
+function acctinfo() {
+    if [[ ! -e ${DL_SCRIPTS}/acctinfo ]];
+		esp_script_dl "acctinfo" "https://raw.githubusercontent.com/cPanelInc/tech-acctinfo/master/acctinfo"
+	fi
+
+    ${DL_SCRIPTS}/acctinfo --nocode ${@}
+}
 
 function esp_help_account() {
 	help_section "Account Information";
@@ -828,7 +827,14 @@ function esp_help_account() {
 # SSL
 # ---
 
-alias sslhunter="esp_script_dl \"sslhunter.sh\" \"https://raw.githubusercontent.com/cPanelTechs/TechScripts/master/sslhunter.sh\"";
+function sslhunter() {
+    if [[ ! -e ${DL_SCRIPTS}/sslhunter.sh ]]; then
+		esp_script_dl sslhunter.sh "https://raw.githubusercontent.com/cPanelTechs/TechScripts/master/sslhunter.sh"
+	fi
+	
+	${DL_SCRIPTS}/sslhunter.sh ${@}
+}
+
 alias ssl-verify='openssl x509 -noout -text -in';
 
 function sslshort() { openssl x509 -noout -text -in "$1" | grep -E "Issuer|Subject:|^[ ]*Not"; }
@@ -912,8 +918,24 @@ function esp_help_AutoSSL() {
 # Exim & Mail
 # -----------
 alias exim-count="exim -bpc"
-alias rblcheck="esp_script_dl \"rblcheck\" \"https://raw.githubusercontent.com/cPanelPeter/rblcheck/master/rblcheck\""
-alias sse="esp_script_dl \"sse.pl\" \"https://raw.githubusercontent.com/cPanelTechs/SSE/master/sse.pl\""
+
+function rblcheck() {
+	if [[ ! -e ${DL_SCRIPTS}/rblcheck ]]; then
+		esp_script_dl rblcheck "https://raw.githubusercontent.com/cPanelPeter/rblcheck/master/rblcheck"
+	fi
+
+	${DL_SCRIPTS}/rblcheck ${@}
+
+}
+
+function sse() {
+	if [[ ! -e ${DL_SCRIPTS}/sse.pl ]]; then
+		esp_script_dl sse.pl "https://raw.githubusercontent.com/cPanelTechs/SSE/master/sse.pl"
+	fi
+
+	${DL_SCRIPTS}/sse.pl ${@}
+
+}
 
 function esp_help_mail() {
 	help_section "Exim & Mail"
@@ -937,6 +959,15 @@ function esp_help_mysql() {
 alias phpinfo="/usr/local/cpanel/bin/rebuild_phpconf --current"
 alias ea-info="curl -s https://raw.githubusercontent.com/cPanelTechs/TechScripts/master/ea-precheck.sh | sh"
 alias webstats-probe="esp_script_dl \"webstatsprobe.pl\" \"https://raw.githubusercontent.com/cPanelTechs/WebStatsProbe/master/webstatsprobe.pl\""
+
+function rblcheck() {
+	if [[ ! -e ${DL_SCRIPTS}/webstatsprobe.pl ]]; then
+		esp_script_dl webstatsprobe.pl "https://raw.githubusercontent.com/cPanelTechs/WebStatsProbe/master/webstatsprobe.pl"
+	fi
+
+	${DL_SCRIPTS}/webstatsprobe.pl ${@}
+
+}
 
 # Proudly stolen from William L.
 function create-phpinfo () {
@@ -1050,9 +1081,16 @@ function esp_help_bash_nav (){
 # Migrations
 # ----------
 
-alias cpmig="esp_script_dl \"cpmig.sh\" \"https://raw.githubusercontent.com/CpanelInc/cPMigration/PUBLIC/cpmig.sh\""
 alias cpeval2="curl -sk https://raw.githubusercontent.com/cPanelTechs/cpeval2/master/cpeval2 | perl"
 alias updateuserdomains-universal="lwp-request http://httpupdate.cpanel.net/cpanelsync/transfers_PUBLIC/pkgacct/ updateuserdomains-universal | perl"
+
+function cpmig() {
+	if [[ ! -e ${DL_SCRIPTS}/cpmig.sh ]]; then
+		esp_script_dl cpmig.sh "https://raw.githubusercontent.com/CpanelInc/cPMigration/PUBLIC/cpmig.sh"
+	fi
+
+	${DL_SCRIPTS}/cpmig.sh ${@}
+}
 
 function esp_migrations () {
 	help_section "Migration Tools"
@@ -1099,7 +1137,6 @@ function esp_help_virtfs() {
 
 alias ssp="curl -sk https://ssp.cpanel.net/SSP/run | sh "
 alias bugreport="curl -sk https://ssp.cpanel.net/run|sh -s -- --bugreport"
-alias csi="esp_script_dl \"csi.pl\" \"https://raw.githubusercontent.com/cPanelTechs/CSI/master/csi.pl\""
 alias ssp-csi="curl -sk https://ssp.cpanel.net/run|sh -s -- --csi"
 alias wo="/usr/local/cpanel/scripts/whoowns"
 alias checkofac="grep -E '\\.(ir|mm|cu|sd|sy):' /etc/userdomains"
@@ -1113,7 +1150,18 @@ alias follow-upcp="/scripts/upcp --force --bg && tail -f /var/cpanel/updatelogs/
 alias cpsqlite="/usr/local/cpanel/3rdparty/bin/sqlite3"
 alias cpperl="/usr/local/cpanel/3rdparty/bin/perl"
 
-pphist() { ( IFS=$'\t'; for i in "$@"; do perl -e 'my $lastts=0;$login=0;while(<>) { chomp; if(/^#((?:\d){10})$/) { $lastts=$1;  } elsif (m,^(export (PS1|LANG|HISTFILE|HISTFILESIZE)=.+|if \[ -x /scripts/autorepair.+|uname -a|alias rm=.echo .Are you sure.+|curl https://ssp.cpanel.net/run.sh|echo -ne ..033.0;cPTKT.+)$,) { $login=1;  } else { print "\n" if($login);$login=0;print  "".localtime($lastts)." $_\n"; }  }' <"${i}"; done  )  }
+function csi() {
+	if [[ ! -e ${DL_SCRIPTS}/csi.pl ]]; then
+		esp_script_dl csi.pl "https://raw.githubusercontent.com/cPanelTechs/CSI/master/csi.pl"
+	fi
+
+	${DL_SCRIPTS}/csi.pl ${@}
+}
+
+function pphist() { 
+    ( IFS=$'\t'; for i in "$@"; do perl -e 'my $lastts=0;$login=0;while(<>) { chomp; if(/^#((?:\d){10})$/) { $lastts=$1;  } elsif (m,^(export (PS1|LANG|HISTFILE|HISTFILESIZE)=.+|if \[ -x /scripts/autorepair.+|uname -a|alias rm=.echo .Are you sure.+|curl https://ssp.cpanel.net/run.sh|echo -ne ..033.0;cPTKT.+)$,) { $login=1;  } else { print "\n" if($login);$login=0;print  "".localtime($lastts)." $_\n"; }  }' <"${i}"; done  )  
+
+}
 
 function prepare_strace() {
 	TSTAMP="$(date '+%Y%m%d-%H%M%S')"
